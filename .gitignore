@@ -8,3 +8,10 @@ JuniorInterviewTask/bin/
 JuniorInterviewTask/obj/Debug/
 /.vs/InterviewTask
 /InterviewTask/obj/Debug
+/InterviewTask/bin/EntityFramework.dll
+/InterviewTask/bin/EntityFramework.SqlServer.dll
+/InterviewTask/bin/EntityFramework.SqlServer.xml
+/InterviewTask/bin/EntityFramework.xml
+/packages/EntityFramework.6.1.3/lib/net40
+/packages/EntityFramework.6.1.3/lib/net45
+/packages/EntityFramework.6.1.3
