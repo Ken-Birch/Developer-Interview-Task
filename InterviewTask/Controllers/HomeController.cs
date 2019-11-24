@@ -21,10 +21,21 @@ namespace InterviewTask.Controllers
         
         public ActionResult Index()
         {
+            ViewBag.Message = "";
+            FileLogger fileLogger = new FileLogger();
             var listHSM = oHSR.Get();
-            foreach(var item in listHSM)
+            if (((List<HelperServiceModel>)listHSM).Count==0)
             {
-                OpenClosedStatus(item); // add hours
+                ViewBag.Message = "Sorry, they are no Helper Services available.";
+                fileLogger.ErrorLog("Home: No Helper Services");
+            }
+            else
+            {
+                foreach(var item in listHSM)
+                {
+                    OpenClosedStatus(item); // add hours
+                }
+                fileLogger.StateLog("Home: Index");
             }
             return View(listHSM);
         }
@@ -32,18 +43,27 @@ namespace InterviewTask.Controllers
         // GET: Home/Details/5
         public ActionResult Details(Guid? id)
         {
+            ViewBag.Message = "";
+            FileLogger fileLogger = new FileLogger();
             if (id == null)
             {
-                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+                //return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+                ViewBag.Message = "Bad request, missing identifier.";
+                fileLogger.ErrorLog("Home: Bad Request");
+                return View();
             }
             
             HelperServiceModel helperServiceModel = oHSR.Get(id.Value);
             if (helperServiceModel == null)
             {
-                return HttpNotFound();
+                //return HttpNotFound();
+                ViewBag.Message = "Bad identifier, helper not found.";
+                fileLogger.ErrorLog("Home: Bad identifier");
+                return View();
             }
 
             OpenClosedStatus(helperServiceModel); // add hours
+            fileLogger.StateLog("Home: Detail");
             return View(helperServiceModel);
         }
 
@@ -110,39 +130,43 @@ namespace InterviewTask.Controllers
                     default: // null
                         throw new ApplicationException(sorry3);                        
                 }
+
                 // check if open now, assume nOpen=0 for closed all day
                 if (nOpen > 0)
-                {
+                { // check opening time
                     if (TimeSpan.Compare(timeOfDay, TimeSpan.FromHours(nOpen)) > 0)
-                    {
+                    { // after opening time, check closing time
                         if (TimeSpan.Compare(timeOfDay, TimeSpan.FromHours(nClose)) < 0) 
                         { // we are open
                             bOpenNClosed = true;
+                            sRet = "Open today until " + ((nClose > 12) ? (nClose - 12).ToString() + "PM" : nClose.ToString() + "AM");
+                            sHoursStyle = "bg-color-donation-orange";
                         }
+                    }
+                    else
+                    { // before opening time
+                        bOpenNClosed = true;
+                        sRet = "Closed: Opening today at " + ((nOpen > 12) ? (nOpen - 12).ToString() + "PM" : nOpen.ToString() + "AM");
+                        sHoursStyle = "bg-color-donation-orange";
                     }
                 }
 
-                if (bOpenNClosed)
-                { // we are open!
-                    sRet = "Open today until " + nClose.ToString() + ((nClose > 12) ? "PM" : "AM");
-                    sHoursStyle = "bg-color-donation-orange";
-                }
-                else
+                if (!bOpenNClosed)
                 { // closed, find next open day/time
                     nOpen = 0;                    
+                    switch (dayOfWeek)
+                    {
+                        case DayOfWeek.Sunday: nOffset = 0; break;
+                        case DayOfWeek.Monday: nOffset = 1; break;
+                        case DayOfWeek.Tuesday: nOffset = 2; break;
+                        case DayOfWeek.Wednesday: nOffset = 3; break;
+                        case DayOfWeek.Thursday: nOffset = 4; break;
+                        case DayOfWeek.Friday: nOffset = 5; break;
+                        case DayOfWeek.Saturday: nOffset = 6; break;
+                    }
                     for(int day = 0; day < 7; day++)
                     {
                         if (nOpen > 0) break;
-                        switch (dayOfWeek)
-                        {
-                            case DayOfWeek.Sunday: nOffset = 0; break;
-                            case DayOfWeek.Monday: nOffset = 1; break;
-                            case DayOfWeek.Tuesday: nOffset = 2; break;
-                            case DayOfWeek.Wednesday: nOffset = 3; break;
-                            case DayOfWeek.Thursday: nOffset = 4; break;
-                            case DayOfWeek.Friday: nOffset = 5; break;
-                            case DayOfWeek.Saturday: nOffset = 6; break;
-                        }
                         switch (day+nOffset)
                         {
                             case 0:
@@ -188,10 +212,10 @@ namespace InterviewTask.Controllers
                                 sOpenDay = "Sunday";
                                 break;
                         }
-                        // check for opening hour
-                        if (nOpen == 0) throw new ApplicationException(sorry4);
-                        sRet = "Closed: Re-opens on " + sOpenDay + " at " + nOpen.ToString() + ((nOpen > 12) ? "PM" : "AM");
                     }
+                    // check for opening hour
+                    if (nOpen == 0) throw new ApplicationException(sorry4);
+                    sRet = "Closed: Re-opens on " + sOpenDay + " at " + ((nOpen > 12) ? (nOpen - 12).ToString() + "PM" : nOpen.ToString() + "AM");
                 }
             }
             catch (Exception ex)

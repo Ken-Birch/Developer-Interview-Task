@@ -9,8 +9,8 @@ namespace InterviewTask.Services
         internal static List<HelperServiceModel> Create()
         {
             var weekdayOpeningTimes = new List<int> { 9, 17 };
-            //var alternativeOpeningTime = new List<int> { 8, 12 };//###
-            var alternativeOpeningTime = new List<int> { 8, 22 };
+            var alternativeOpeningTime = new List<int> { 8, 12 };//###
+            //var alternativeOpeningTime = new List<int> { 8, 22 };
             var weekendOpeningTimes = new List<int> { 10, 12 };
             var closedTimes = new List<int> { 0, 0 };
 

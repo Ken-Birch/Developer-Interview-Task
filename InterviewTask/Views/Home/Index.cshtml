@@ -173,6 +173,12 @@
     <section>
         <div class="container">
             <div class="row">
+                @if (ViewBag.Message != "")
+                {
+                    <p>
+                        @ViewBag.Message 
+                    </p>
+                }
                 <!-- Marie Curie Helper Service card -->
                 @foreach (var item in Model)
                 {
